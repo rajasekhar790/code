@@ -1,16 +1,15 @@
-document.getElementById('userInput').addEventListener('keydown', function(event) {
-    if (event.key === 'Enter') {
-        event.preventDefault();
-        sendMessage();
-    }
-});
-
 function sendMessage() {
-    const userInput = document.getElementById('userInput').value;
-    const chatbox = document.getElementById('chatbox');
+    const userInput = document.getElementById("userInput").value;
+    if (userInput.trim() === "") return;  // Prevent empty messages
 
-    chatbox.innerHTML += `<div class="user-message">You: ${userInput}</div>`;
+    // Display user's message
+    const chatbox = document.getElementById("chatbox");
+    const userMessageDiv = document.createElement("div");
+    userMessageDiv.className = "user-message";
+    userMessageDiv.textContent = userInput;
+    chatbox.appendChild(userMessageDiv);
 
+    // Fetch response from Flask server
     fetch('/chat', {
         method: 'POST',
         headers: {
@@ -20,9 +19,12 @@ function sendMessage() {
     })
     .then(response => response.json())
     .then(data => {
-        chatbox.innerHTML += `<div class="bot-message">Bot: ${data.response}</div>`;
-        chatbox.scrollTop = chatbox.scrollHeight;
+        const botMessageDiv = document.createElement("div");
+        botMessageDiv.className = "bot-message";
+        botMessageDiv.textContent = data.response;
+        chatbox.appendChild(botMessageDiv);
     });
 
-    document.getElementById('userInput').value = '';
+    // Clear the input field
+    document.getElementById("userInput").value = "";
 }
