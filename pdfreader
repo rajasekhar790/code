@@ -1,0 +1,36 @@
+import re
+import requests
+import pdfplumber
+
+def extract_links_from_pdf(pdf_path):
+    links = []
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            text = page.extract_text()
+            for url in re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', text):
+                if url.endswith('.pdf'):
+                    links.append(url)
+    return links
+
+def download_pdf(url):
+    response = requests.get(url)
+    filename = url.split('/')[-1]
+    with open(filename, 'wb') as f:
+        f.write(response.content)
+    return filename
+
+def read_pdf_content(pdf_path):
+    with pdfplumber.open(pdf_path) as pdf:
+        content = ''
+        for page in pdf.pages:
+            content += page.extract_text() + '\n'
+    return content
+
+# Example Usage
+pdf_path = 'your_pdf_file.pdf'
+links = extract_links_from_pdf(pdf_path)
+
+for link in links:
+    linked_pdf = download_pdf(link)
+    print(f"Content of {linked_pdf}:")
+    print(read_pdf_content(linked_pdf))
