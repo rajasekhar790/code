@@ -26,6 +26,53 @@ def read_pdf_content(pdf_path):
             content += page.extract_text() + '\n'
     return content
 
+
+
+import fitz  # PyMuPDF
+import os
+
+def extract_images_from_pdf(pdf_path, output_folder):
+    # Ensure output folder exists
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    doc = fitz.open(pdf_path)
+    image_count = 0
+
+    for page_num in range(len(doc)):
+        # Get the page
+        page = doc.load_page(page_num)
+
+        # List of images in the page
+        image_list = page.get_images(full=True)
+
+        # Save each image
+        for image_index, img in enumerate(page.get_images(full=True)):
+            xref = img[0]
+            base_image = doc.extract_image(xref)
+            image_bytes = base_image["image"]
+
+            # Construct the image file path
+            image_filename = f"image{page_num+1}_{image_index+1}.png"
+            image_path = os.path.join(output_folder, image_filename)
+
+            with open(image_path, "wb") as image_file:
+                image_file.write(image_bytes)
+
+            image_count += 1
+
+    doc.close()
+    return image_count
+
+# Example usage
+pdf_path = 'path_to_your_pdf.pdf'
+output_folder = 'extracted_images'
+num_images = extract_images_from_pdf(pdf_path, output_folder)
+
+print(f"Extracted {num_images} images.")
+
+
+
 # Example Usage
 pdf_path = 'your_pdf_file.pdf'
 links = extract_links_from_pdf(pdf_path)
