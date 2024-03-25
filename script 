@@ -1,0 +1,7 @@
+# Start Beeline and connect to HiveServer2
+beeline -u 'jdbc:hive2://your_hive_server_host:10000/your_database_name' -n your_username -p your_password -e 'SHOW TABLES' > tables.txt
+
+# Read each line in tables.txt and drop the table
+while read table; do
+    beeline -u 'jdbc:hive2://your_hive_server_host:10000/your_database_name' -n your_username -p your_password -e "DROP TABLE $table"
+done < tables.txt
