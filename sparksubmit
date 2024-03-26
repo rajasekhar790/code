@@ -1,0 +1,18 @@
+/usr/bin/spark-submit \
+--master yarn \
+--executor-cores 5 \
+--executor-memory 20g \
+--driver-memory 25g \
+--conf spark.driver.maxResultSize=20g \
+--conf spark.executor.memoryOverhead=9000 \
+--conf spark.rpc.message.maxSize=2000 \
+--conf spark.dynamicAllocation.enabled=true \
+--conf spark.sql.execution.arrow.enabled=true \
+--conf spark.yarn.appMasterEnv.PYSPARK_PYTHON=/pyenv/bin/python \
+--conf spark.yarn.dist.archives=package_name#pyenv \
+--conf spark.sql.extensions=com.qubole.spark.hiveacid.HiveAcidAutoConvertExtension \
+--conf spark.kryo.registrator=com.qubole.spark.hiveacid.util.HiveAcidKyroRegistrator \
+--packages org.mongodb.spark:mongo-spark-connector_2.12:3.0.1 \
+--conf spark.mongodb.input.uri=mongodb://username:password@host:port/database.collection \
+--conf spark.mongodb.output.uri=mongodb://username:password@host:port/database.collection \
+/path/to/your_script.py
