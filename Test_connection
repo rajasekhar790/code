@@ -10,3 +10,31 @@ async def test_connection(request):
                 return response.json({'status': 'success', 'message': 'Database connection is successful'})
             else:
                 return response.json({'status': 'error', 'message': 'Failed to fetch data from the database'}, status=500)
+
+
+
+create_table_query = '''
+CREATE TABLE IF NOT EXISTS e_orders_results (
+    record_type VARCHAR,
+    client_id VARCHAR,
+    loc VARCHAR,
+    state_of_issuance VARCHAR,
+    product_code VARCHAR,
+    employer_group VARCHAR,
+    network_code VARCHAR,
+    funding_type VARCHAR,
+    test_name VARCHAR,
+    cpt VARCHAR,
+    second_pathology_read_indicator VARCHAR,
+    sub_specialty_medical_credentials_indicator VARCHAR,
+    cap_accreditation_indicator VARCHAR,
+    e_orders_results_indicator VARCHAR,
+    valid_begin_date VARCHAR,
+    valid_end_date VARCHAR
+);
+'''
+
+cursor = conn.cursor()
+cursor.execute(create_table_query)
+conn.commit()
+
