@@ -1,0 +1,57 @@
+from sanic import Sanic
+from sanic.response import json, text
+import pandas as pd
+from io import BytesIO
+import psycopg2
+from datetime import datetime
+
+app = Sanic("ExcelUploader")
+
+# Database connection function
+def get_db_connection():
+    return psycopg2.connect(
+        dbname='your_db_name',
+        user='your_username',
+        password='your_password',
+        host='your_host',
+        port='your_port'
+    )
+
+# Route to upload Excel file
+@app.post("/upload")
+async def upload(request):
+    if 'file' not in request.files:
+        return text("File not found", status=400)
+
+    file = request.files.get('file')[0].body
+
+    # Read the Excel file into a Pandas DataFrame
+    df = pd.read_excel(BytesIO(file))
+
+    # Print one record from the DataFrame
+    print(df.iloc[0])
+
+    conn = get_db_connection()
+
+    insert_query = '''
+    INSERT INTO e_orders_results (
+        record_type, client_id, loc, state_of_issuance, product_code, employer_group, network_code, funding_type,
+        test_name, cpt, second_pathology_read_indicator, sub_specialty_medical_credentials_indicator,
+        cap_accreditation_indicator, e_orders_results_indicator, valid_begin_date, valid_end_date, created_at
+    ) VALUES %s
+    '''
+
+    current_timestamp = datetime.now()
+    values = [tuple(x) + (current_timestamp,) for x in df.to_numpy()]
+
+    cursor = conn.cursor()
+    from psycopg2.extras import execute_values
+    execute_values(cursor, insert_query, values)
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return json({"status": "success", "message": "File uploaded and data inserted successfully."})
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000)
