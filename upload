@@ -31,6 +31,26 @@ async def upload(request):
     # Print one record from the DataFrame
     print(df.iloc[0])
 
+
+
+
+# Convert DataFrame to CSV in memory
+buffer = StringIO()
+df.to_csv(buffer, index=False, header=False)
+buffer.seek(0)  # Rewind to the beginning of the buffer
+
+# Copy CSV data into the table
+try:
+    cur.copy_from(buffer, 'your_table_name', sep=',')
+    conn.commit()
+except Exception as e:
+    print(f"Error: {e}")
+    conn.rollback()  # Rollback the transaction in case of error
+finally:
+    # Close the cursor and connection
+    cur.close()
+    conn.close()
+
     conn = get_db_connection()
 
     insert_query = '''
