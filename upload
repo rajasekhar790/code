@@ -72,6 +72,17 @@ finally:
     conn.close()
 
     return json({"status": "success", "message": "File uploaded and data inserted successfully."})
+-------------------------------------------------------------------------------------------------------
+
+csv_data = buffer.getvalue().replace('""', '').replace('"', '')
+
+            # Use copy_from to bulk insert the data
+            cur.copy_expert(f"COPY cpt_ppp_flags FROM STDIN WITH CSV DELIMITER ',' QUOTE '\"'", StringIO(csv_data))
+
+----------------------------------------------------------------------------------------------------
+
+
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)
