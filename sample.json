@@ -1,0 +1,11 @@
+Sample json 
+
+{
+    "table_name": "employee",
+    "columns": [
+        {"name": "id", "type": "SERIAL PRIMARY KEY"},
+        {"name": "name", "type": "VARCHAR(100)"},
+        {"name": "age", "type": "INTEGER"},
+        {"name": "department", "type": "VARCHAR(100)"}
+    ]
+}
