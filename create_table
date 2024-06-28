@@ -1,0 +1,26 @@
+from sanic import Sanic
+from sanic.response import json
+import asyncpg
+import json as json_lib
+
+app = Sanic("TableCreator")
+
+@app.route("/create_table", methods=["POST"])
+async def create_table(request):
+    data = request.json
+    table_name = data["table_name"]
+    columns = data["columns"]
+    
+    # Construct the CREATE TABLE SQL statement
+    column_defs = ", ".join([f'{col["name"]} {col["type"]}' for col in columns])
+    create_table_query = f'CREATE TABLE IF NOT EXISTS {table_name} ({column_defs});'
+    
+    # Connect to PostgreSQL and execute the query
+    conn = await asyncpg.connect(user='your_username', password='your_password', database='your_database', host='127.0.0.1')
+    await conn.execute(create_table_query)
+    await conn.close()
+    
+    return json({"status": "success", "table": table_name})
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000)
