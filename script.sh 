@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Input file containing the environment variables
+input_file="/mnt/data/file-s5CfCwqs29Rt58KU8OfleRD9"
+
+# Output file to store the export commands
+output_file="export_env.sh"
+
+# Read the input file and generate export commands
+echo "#!/bin/bash" > $output_file
+
+# Read the entire file content
+file_content=$(<"$input_file")
+
+# Split the content by semicolon and iterate over each variable
+IFS=';' read -ra vars <<< "$file_content"
+for var in "${vars[@]}"; do
+  # Remove leading and trailing whitespace
+  var=$(echo $var | xargs)
+  # Check if the variable is not empty
+  if [[ ! -z "$var" && "$var" != \#* ]]; then
+    echo "export $var" >> $output_file
+  fi
+done
+
+# Make the output script executable
+chmod +x $output_file
+
+echo "Export script generated: $output_file"
