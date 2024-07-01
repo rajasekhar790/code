@@ -1,0 +1,26 @@
+bscdata1 = Blueprint('bscdata1')
+
+@bscdata1.route("/create_table", methods=["POST"])
+async def create_table(request):
+    data = request.json
+    table_name = data["table_name"]
+    columns = data["columns"]
+    
+    # Dynamically create the SQL CREATE TABLE statement
+    columns_sql = ", ".join([f"{col['name']} {col['type']}" for col in columns])
+    create_table_sql = f"CREATE TABLE {table_name} ({columns_sql});"
+    
+    # Connect to the PostgreSQL database and execute the SQL statement
+    connection = create_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor()
+            cursor.execute(create_table_sql)
+            connection.commit()
+            cursor.close()
+            connection.close()
+            return response.json({"status": "success", "message": f"Table {table_name} created successfully"})
+        except Exception as e:
+            return response.json({"status": "failure", "message": str(e)})
+    else:
+        return response.json({"status": "failure", "message": "Database connection failed"})
