@@ -1,0 +1,32 @@
+{
+    "table_name": "employees",
+    "columns": [
+        {"name": "id", "type": "SERIAL", "constraints": "PRIMARY KEY"},
+        {"name": "name", "type": "VARCHAR(100)", "constraints": "NOT NULL"},
+        {"name": "position", "type": "VARCHAR(50)", "constraints": "NOT NULL"},
+        {"name": "salary", "type": "NUMERIC(10, 2)", "constraints": "NOT NULL"},
+        {"name": "hire_date", "type": "DATE", "constraints": "NOT NULL"},
+        {"name": "department", "type": "VARCHAR(50)"}
+    ]
+}
+
+
+{
+    "table_name": "employees",
+    "records": [
+        {
+            "name": "John Doe",
+            "position": "Software Engineer",
+            "salary": 75000.00,
+            "hire_date": "2023-01-15",
+            "department": "Engineering"
+        },
+        {
+            "name": "Jane Smith",
+            "position": "Data Analyst",
+            "salary": 68000.00,
+            "hire_date": "2023-02-20",
+            "department": "Data Science"
+        }
+    ]
+}
