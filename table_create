@@ -1,0 +1,157 @@
+from sanic import Sanic
+from sanic.response import json
+from sanic.request import Request
+import psycopg2
+from psycopg2 import sql
+import datetime
+
+app = Sanic("DynamicTableApp")
+
+# Database configuration
+DB_CONFIG = {
+    'dbname': 'your_db_name',
+    'user': 'your_db_user',
+    'password': 'your_db_password',
+    'host': 'localhost',
+    'port': '5432'
+}
+
+# Function to get database connection
+def get_db_connection():
+    return psycopg2.connect(**DB_CONFIG)
+
+# Function to initialize the metadata table
+def initialize_metadata_table():
+    conn = get_db_connection()
+    create_metadata_table_sql = """
+    CREATE TABLE IF NOT EXISTS metadata (
+        id SERIAL PRIMARY KEY,
+        table_name VARCHAR(255) NOT NULL,
+        columns_info TEXT NOT NULL
+    );
+    """
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(create_metadata_table_sql)
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"Error creating metadata table: {e}")
+    finally:
+        conn.close()
+
+initialize_metadata_table()
+
+@app.route("/create_table", methods=["POST"])
+async def create_table(request: Request):
+    schema = request.json
+    table_name = schema["table_name"]
+    columns = schema["columns"]
+
+    # Handle case where columns is a dictionary
+    if isinstance(columns, dict):
+        columns = [columns]
+
+    if not columns:
+        return json({"error": "No columns provided. Table creation aborted."}, status=400)
+
+    column_definitions = []
+    columns_info = []
+    for column in columns:
+        name = column["name"]
+        data_type = column["type"]
+        column_definitions.append(f"{name} {data_type}")
+        columns_info.append(f"{name} {data_type}")
+
+    columns_sql = ", ".join(column_definitions)
+    create_table_sql = f"CREATE TABLE {table_name} ({columns_sql});"
+    columns_info_str = "; ".join(columns_info)
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # Check if table already exists
+            cursor.execute("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name=%s)", (table_name,))
+            if cursor.fetchone()[0]:
+                return json({"message": f"Table {table_name} already exists."}, status=200)
+            
+            cursor.execute(create_table_sql)
+            insert_metadata_sql = """
+            INSERT INTO metadata (table_name, columns_info)
+            VALUES (%s, %s);
+            """
+            cursor.execute(insert_metadata_sql, (table_name, columns_info_str))
+        conn.commit()
+        return json({"message": f"Table {table_name} created successfully."}, status=200)
+    except Exception as e:
+        conn.rollback()
+        print(f"Error creating table: {e}")
+        return json({"error": f"Error creating table: {e}"}, status=500)
+    finally:
+        conn.close()
+
+@app.route("/insert_data", methods=["POST"])
+async def insert_data(request: Request):
+    data = request.json
+    table_name = data["table_name"]
+    records = data["records"]
+
+    if not records:
+        return json({"error": "No records provided."}, status=400)
+
+    columns = records[0].keys()
+    columns_sql = ", ".join(columns)
+    values_sql = ", ".join([f"%({col})s" for col in columns])
+
+    insert_sql = sql.SQL("INSERT INTO {} ({}) VALUES ({})").format(
+        sql.Identifier(table_name),
+        sql.SQL(columns_sql),
+        sql.SQL(values_sql)
+    )
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.executemany(insert_sql.as_string(conn), records)
+        conn.commit()
+        return json({"message": f"Data inserted successfully into {table_name}."}, status=200)
+    except Exception as e:
+        conn.rollback()
+        print(f"Error inserting data: {e}")
+        return json({"error": f"Error inserting data: {e}"}, status=500)
+    finally:
+        conn.close()
+
+@app.route("/select", methods=["POST"])
+async def select_data(request: Request):
+    data = request.json
+    table_name = data["table_name"]
+
+    select_sql = sql.SQL("SELECT * FROM {}").format(sql.Identifier(table_name))
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(select_sql)
+            rows = cursor.fetchall()
+            columns = [desc[0] for desc in cursor.description]
+            
+            result = []
+            for row in rows:
+                row_dict = dict(zip(columns, row))
+                for key, value in row_dict.items():
+                    if isinstance(value, (datetime.date, datetime.datetime)):
+                        row_dict[key] = value.isoformat()
+                    else:
+                        row_dict[key] = str(value)
+                result.append(row_dict)
+                
+        return json(result, status=200)
+    except Exception as e:
+        print(f"Error retrieving data: {e}")
+        return json({"error": f"Error retrieving data: {e}"}, status=500)
+    finally:
+        conn.close()
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000)
