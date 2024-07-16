@@ -1,1 +1,58 @@
 
+import json
+from jsonbender import S, OptionalS, Forall, bend, BendingException
+
+def load_json(file_path):
+    with open(file_path, 'r') as file:
+        return json.load(file)
+
+def create_bending_rule(rule_str):
+    if rule_str.startswith("S("):
+        path = rule_str[2:-1].replace("'", "").replace('"', "").split(", ")
+        return S(*path)
+    elif rule_str.startswith("OptionalS("):
+        parts = rule_str[10:-1].replace("'", "").replace('"', "").split(", ")
+        default_value = parts[-1]
+        path = parts[:-1]
+        return OptionalS(*path, default=default_value)
+    return None
+
+def parse_bending_rules(rules_json):
+    rules = {}
+    for key, value in rules_json.items():
+        if isinstance(value, str):
+            rules[key] = create_bending_rule(value)
+        elif isinstance(value, list):
+            rules[key] = Forall(parse_bending_rules(value[0]))
+        elif isinstance(value, dict):
+            rules[key] = parse_bending_rules(value)
+    return rules
+
+def transform_data(rules, data):
+    try:
+        return bend(rules, data)
+    except BendingException as e:
+        print(f"Error during bending: {e}")
+        raise
+
+# Load the bending rules and input data from JSON files
+bending_rules_json = load_json('bending_rules.json')
+input_data = load_json('input_data.json')
+
+# Parse the bending rules
+bending_rules = parse_bending_rules(bending_rules_json)
+
+# Debugging output to ensure rules and input are correct
+print("Parsed Bending Rules:")
+print(json.dumps(bending_rules_json, indent=2))
+
+print("\nInput Data:")
+print(json.dumps(input_data, indent=2))
+
+# Transform the input data
+try:
+    transformed_data = transform_data(bending_rules, input_data)
+    print("\nTransformed Data:")
+    print(json.dumps(transformed_data, indent=2))
+except BendingException as e:
+    print(f"Transformation failed: {e}")
