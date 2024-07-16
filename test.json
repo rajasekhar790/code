@@ -1,58 +1,52 @@
+{
+"payload": {
+    "KEY_CHK_DCN_NBR": "12345",
+    "BILL_CLSFCTN_CD": "A1",
+    "SRC_CLM_TYPE_CD": "Type1",
+    "CLM_TYPE_TXT": "Text1",
+    "SRVC_RNDRG_TYPE_CD": "Type2",
+    "CLM_LINE_SRVC_STRT_DT": "01/01/2020",
+    "CLM_LINE_SRVC_END_DT": "01/02/2020",
+    "ADMT_DT": "01/01/2020",
+    "claim_line": [
+        {
+            "CLNT_ID": "Client123",
+            "TNNT_ID": "Tenant456",
+            "EDL_CREAT_DTM": "2020-01-01T00:00:00Z",
+            "RCRD_STTS_CD": "Status1",
+            "CLMADJ_KEY": "AdjustmentKey123",
+            "CLM_LINE_NBR": "Line123",
+            "CLM_SOR_CD": "SourceCode123"
+        }
+    ]
+}
 
-import json
-from jsonbender import S, OptionalS, Forall, bend, BendingException
+}
 
-def load_json(file_path):
-    with open(file_path, 'r') as file:
-        return json.load(file)
 
-def create_bending_rule(rule_str):
-    if rule_str.startswith("S("):
-        path = rule_str[2:-1].replace("'", "").replace('"', "").split(", ")
-        return S(*path)
-    elif rule_str.startswith("OptionalS("):
-        parts = rule_str[10:-1].replace("'", "").replace('"', "").split(", ")
-        default_value = parts[-1]
-        path = parts[:-1]
-        return OptionalS(*path, default=default_value)
-    return None
 
-def parse_bending_rules(rules_json):
-    rules = {}
-    for key, value in rules_json.items():
-        if isinstance(value, str):
-            rules[key] = create_bending_rule(value)
-        elif isinstance(value, list):
-            rules[key] = Forall(parse_bending_rules(value[0]))
-        elif isinstance(value, dict):
-            rules[key] = parse_bending_rules(value)
-    return rules
+{
+    "payload": {
+        "claimid": "S('KEY_CHK_DCN_NBR')",
+        "BILL_CLSFCTN_CD": "S('BILL_CLSFCTN_CD')",
+        "SRC_CLM_TYPE_CD": "S('SRC_CLM_TYPE_CD')",
+        "CLM_TYPE_TXT": "S('CLM_TYPE_TXT')",
+        "SRVC_RNDRG_TYPE_CD": "S('SRVC_RNDRG_TYPE_CD')",
+        "CLM_LINE_SRVC_STRT_DT": "S('CLM_LINE_SRVC_STRT_DT')",
+        "CLM_LINE_SRVC_END_DT": "S('CLM_LINE_SRVC_END_DT')",
+        "ADMT_DT": "S('ADMT_DT')",
+        "claim_line": [
+            {
+                "CLNT_ID": "S('CLNT_ID')",
+                "TNNT_ID": "S('TNNT_ID')",
+                "EDL_CREAT_DTM":"S('EDL_CREAT_DTM')",
+                "RCRD_STTS_CD":"S('RCRD_STTS_CD')",
+                "CLMADJ_KEY": "S('CLMADJ_KEY')",
+                "CLM_LINE_NBR": "S('CLM_LINE_NBR')",
+                "CLM_SOR_CD": "S('CLM_SOR_CD')"
+            }
+        ]
+    }
+}
 
-def transform_data(rules, data):
-    try:
-        return bend(rules, data)
-    except BendingException as e:
-        print(f"Error during bending: {e}")
-        raise
 
-# Load the bending rules and input data from JSON files
-bending_rules_json = load_json('bending_rules.json')
-input_data = load_json('input_data.json')
-
-# Parse the bending rules
-bending_rules = parse_bending_rules(bending_rules_json)
-
-# Debugging output to ensure rules and input are correct
-print("Parsed Bending Rules:")
-print(json.dumps(bending_rules_json, indent=2))
-
-print("\nInput Data:")
-print(json.dumps(input_data, indent=2))
-
-# Transform the input data
-try:
-    transformed_data = transform_data(bending_rules, input_data)
-    print("\nTransformed Data:")
-    print(json.dumps(transformed_data, indent=2))
-except BendingException as e:
-    print(f"Transformation failed: {e}")
