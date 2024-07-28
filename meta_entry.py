@@ -19,12 +19,13 @@ connection = DBprovider.get_instance()
 # Create Metadata Table
 def create_metadata_table():
     create_metadata_sql = """
-    CREATE TABLE IF NOT EXISTS table_metadata (
-        id SERIAL PRIMARY KEY,
-        table_name VARCHAR(255) NOT NULL,
-        column_name VARCHAR(255) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
+    CREATE TABLE IF NOT EXISTS metadata (
+    client_id INT,
+    table_name VARCHAR(255),
+    list_columns TEXT, 
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
     """
     try:
         connection.execute_query(create_metadata_sql)
