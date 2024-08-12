@@ -1,0 +1,26 @@
+from  okta_jwt_verifier  import JWTUtils
+from jwt_utils  import JWTValidationException
+import os 
+from config import constants 
+
+
+def token_validation(func):
+    def wrapper(token, *args, **kwargs):
+        try:
+            headers, claims, signing_input, signature = JWTUtils.parse_token(token=token)
+            JWTUtils.verify_claims(
+                claims=claims,
+                claims_to_verify=['exp', 'iat', 'jti', 'sub', 'iss', 'aud'],
+                issuer=constants.OKTA_ISSUER,
+                audience=constants.OKTA_AUDIENCE
+            )
+            JWTUtils.verify_expiration(token=token, leeway=constants.LEEWAY)
+            JWTUtils.verify_signature(
+                token=token,
+                okta_jwk=constants.OKTA_JWKS_URL
+            )
+            return func(token, *args, **kwargs)
+        except JWTValidationException as e:
+            return {'message': str(e)}
+    
+    return wrapper
