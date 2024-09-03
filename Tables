@@ -1,0 +1,24 @@
+CREATE TABLE client_list (
+    client_id SERIAL PRIMARY KEY,  -- Automatically generates a unique ID for each client
+    client VARCHAR(255) NOT NULL,  -- Name or identifier of the client
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Timestamp of when the client was created
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP   -- Timestamp of the last update made to the client details
+);
+
+
+
+CREATE TABLE user_list (
+    user_id SERIAL PRIMARY KEY,     -- Automatically generates a unique ID for each user
+    ad_group VARCHAR(255),          -- The AD (Active Directory) group the user belongs to
+    role VARCHAR(255),              -- The role of the user within the system
+    client_id INT REFERENCES client_list(client_id),  -- Foreign key to client_list
+    approval_status VARCHAR(50),    -- Indicates whether the user is approved (e.g., 'approved', 'pending')
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Timestamp of when the user was created
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Timestamp of the last update made to the user details
+    comments TEXT,                  -- Any comments or notes regarding the user
+    user_status VARCHAR(50),        -- Indicates the current status of the user (e.g., 'active', 'inactive')
+    is_deleted BOOLEAN DEFAULT FALSE,  -- Indicates whether the user record is marked for deletion
+    request_id INT                  -- Unique identifier for the request associated with the user
+);
+
+
