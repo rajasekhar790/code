@@ -27,3 +27,29 @@ GROUP BY
     u.product, 
     u.client_name, 
     u.user_role->>'role';
+
+
+
+SELECT 
+    u.user_id, 
+    u.user_name, 
+    u.site, 
+    u.product, 
+    u.client_name, 
+    u.user_role->>'role' AS user_role,
+    -- Derived field using window function for existing_client_access
+    STRING_AGG(
+        u.client_name, ', '
+    ) FILTER (WHERE u.user_status IN ('Approved', 'Rejected')) 
+    OVER (PARTITION BY u.user_id) AS existing_client_access
+FROM 
+    user_details u
+WHERE 
+    u.user_status = 'Requested'
+GROUP BY 
+    u.user_id, 
+    u.user_name, 
+    u.site, 
+    u.product, 
+    u.client_name, 
+    u.user_role->>'role';
