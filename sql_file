@@ -1,0 +1,29 @@
+SELECT 
+    u.user_id, 
+    u.user_name, 
+    u.site, 
+    u.product, 
+    u.client_name, 
+    u.user_role->>'role' AS user_role,
+    -- Derived field for existing_client_access
+    CASE 
+        WHEN u.user_status IN ('Approved', 'Rejected') 
+        THEN (
+            SELECT STRING_AGG(client_name, ', ') 
+            FROM user_details ud 
+            WHERE ud.user_id = u.user_id 
+              AND ud.user_status IN ('Approved', 'Rejected')
+        )
+        ELSE NULL
+    END AS existing_client_access
+FROM 
+    user_details u
+WHERE 
+    u.user_status = 'Requested'
+GROUP BY 
+    u.user_id, 
+    u.user_name, 
+    u.site, 
+    u.product, 
+    u.client_name, 
+    u.user_role->>'role';
