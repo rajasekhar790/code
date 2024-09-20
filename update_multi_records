@@ -1,0 +1,44 @@
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+def execute_query(query):
+    # Placeholder for your custom database execution method
+    # Implement the call to your database here
+    pass
+
+@app.route('/updateStatus', methods=['POST'])
+async def update_status():
+    data = request.json
+    table_name = data.get("table_name")
+    updates = data.get("updates")  # This should be a list of dictionaries
+
+    if not table_name or not updates:
+        return jsonify({"error": "Missing table name or updates data."}), 400
+
+    responses = []
+    # Process each update individually
+    for update in updates:
+        # Safely format the update query to avoid SQL injection
+        user_status = update['user_status'].replace("'", "''")  # Simple escaping, customize based on your DB's requirements
+        comments = update['comments'].replace("'", "''")  # Simple escaping, customize based on your DB's requirements
+        request_id = update['request_id'].replace("'", "''")
+        client_id = update['client_id'].replace("'", "''")
+        
+        update_query = f"""
+        UPDATE {table_name}
+        SET user_status = '{user_status}', comments = '{comments}'
+        WHERE request_id = '{request_id}' AND client_id = '{client_id}';
+        """
+        
+        try:
+            # Assuming execute_query is your custom function to execute the SQL
+            execute_query(update_query)
+            responses.append({"request_id": update['request_id'], "status": "success"})
+        except Exception as e:
+            responses.append({"request_id": update['request_id'], "status": "error", "message": str(e)})
+
+    return jsonify({"results": responses}), 200
+
+if __name__ == '__main__':
+    app.run(debug=True)
