@@ -1,0 +1,48 @@
+import jwt  # PyJWT library
+
+def wrapper(token, *args, **kwargs):
+    try:
+        # Assuming JWTUtils is custom utility, continue using it to parse the token
+        headers, claims, signing_input, signature = JWTUtils.parse_token(token=token)
+
+        JWTUtils.verify_claims(
+            claims=claims,
+            claims_to_verify=['exp', 'iat', 'jti', 'sub', 'iss', 'aud'],
+            issuer=OKTA_ISSUER,
+            audience=OKTA_AUDIENCE
+        )
+
+        JWTUtils.verify_expiration(token=token, leeway=LEEWAY)
+        JWTUtils.verify_signature(token=token)
+
+        return "Success"
+    
+    except jwt.ExpiredSignatureError:
+        return json({
+            "error": "Token expired",
+            "message": "The token has expired, please request a new one."
+        }, status=401)
+    
+    except jwt.InvalidTokenError as e:
+        # Handle other token errors like invalid signature, etc.
+        return json({
+            "error": "Invalid token",
+            "message": f"Token is invalid: {str(e)}"
+        }, status=401)
+    
+    except jwt_utils.JWTValidationException as e:
+        # For any other JWT validation issues
+        return json({
+            "error": "Unauthorized",
+            "message": "Token validation failed."
+        }, status=401)
+    
+    except Exception as e:
+        # General fallback exception
+        return json({
+            "error": "Server Error",
+            "message": f"An error occurred: {str(e)}"
+        }, status=500)
+
+# Test call for wrapper with a sample token
+wrapper(token)
