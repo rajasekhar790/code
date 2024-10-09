@@ -33,6 +33,13 @@ def jwt_verifier(f):
             # Handle verification errors
             return response.json({"error": "Invalid token", "message": str(e)}, status=401)
 
+
+@app.route('/secure-endpoint', methods=["GET"])
+@token_required
+async def secure_data_handler(request):
+    return response.json({"message": "You have access to secure data"})
+
+
         # Proceed with the request if token is valid
         return await f(request, *args, **kwargs)
 
