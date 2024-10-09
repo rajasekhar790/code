@@ -1,0 +1,39 @@
+from functools import wraps
+from sanic import response
+from sanic.exceptions import Unauthorized
+from okta_jwt_verifier import AccessTokenVerifier, JWTVerifierError
+
+# Replace with your Okta domain and client ID
+OKTA_DOMAIN = "https://your-okta-domain.okta.com"
+CLIENT_ID = "your-client-id"
+
+# Initialize the verifier
+access_token_verifier = AccessTokenVerifier(
+    issuer=f"{OKTA_DOMAIN}/oauth2/default",
+    audience="api://default",  # Use the audience you configured
+    client_id=CLIENT_ID,
+)
+
+# Decorator function for token verification
+def jwt_verifier(f):
+    @wraps(f)
+    async def decorated_function(request, *args, **kwargs):
+        # Extract the token from the Authorization header
+        auth_header = request.headers.get("Authorization", None)
+        if not auth_header or not auth_header.startswith("Bearer "):
+            raise Unauthorized("Missing or invalid Authorization header")
+
+        token = auth_header.split(" ")[1]  # Extract the token
+
+        try:
+            # Verify the JWT token asynchronously
+            decoded_token = await access_token_verifier.verify(token)
+            request.ctx.user = decoded_token  # Store the decoded token in the request context for further use
+        except JWTVerifierError as e:
+            # Handle verification errors
+            return response.json({"error": "Invalid token", "message": str(e)}, status=401)
+
+        # Proceed with the request if token is valid
+        return await f(request, *args, **kwargs)
+
+    return decorated_function
