@@ -1,0 +1,26 @@
+Here is a rewritten version of the code shown in the image:
+
+async def okta_config(url_key: str):
+    response = await http_cli.get(
+        url=f'{OKTA_ISSUER}/.well-known/openid-configuration', 
+        timeout=30
+    )
+    return response.json()[url_key]
+
+@userinfo_cache
+async def fetch_user_info(token: str):
+    userinfo_url = await okta_config("userinfo_endpoint")
+    headers = {
+        'Authorization': f'Bearer {token}'
+    }
+    response = await http_cli.get(
+        url=userinfo_url, 
+        headers=headers, 
+        timeout=30
+    )
+    if response.status_code == 401:
+        return {'status': 'unauthorized'}
+    return response.json()
+
+This version maintains the original functionality, but I've adjusted formatting slightly for readability. If you need further adjustments or explanations, let me know!
+
