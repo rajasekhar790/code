@@ -12,3 +12,15 @@ agent = Agent(
 
 result =  await agent.run('Hello')
 print(result.data)
+
+
+
+
+history = []
+user_input = input("User:")
+while user_input != "bye":
+    print("User: ", user_input)
+    result = await agent.run(user_prompt=user_input, message_history=history)
+    print("Assistant: ", result.data)
+    history = result.all_messages()
+    user_input = input("User:")
