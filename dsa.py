@@ -46,3 +46,33 @@ for index, fruit in enumerate(my_list):
     print(f"Fruit at index {index}: {fruit}")
 
 ###########################################################################
+
+
+## sum of the digits we have to pass the number to the sum_digit function 
+def sum_digits(n):
+    total = 0
+    number = abs(n)  # handle negative numbers if needed
+    while number > 0:
+        total += number % 10
+        number //= 10
+    return total
+
+
+######################################################################################
+
+## Majority Element of the list 
+def majority_element(nums):
+    majority = None
+    count = 0
+
+    # Find a potential candidate using Boyer-Moore Voting Algorithm
+    for num in nums:
+        if count == 0:
+            majority = num
+            count = 1
+        elif num == majority:
+            count += 1
+        else:
+            count -= 1
+
+####################################################################################
