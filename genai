@@ -1,1 +1,14 @@
+#### Chat bot using pydantic AI ########
+from pydantic_ai import Agent
+import os
 
+os.environ["GEMINI_API_KEY"] = ""
+
+
+agent = Agent(
+    'gemini-1.5-flash',
+    system_prompt='You are helpful agent',
+)
+
+result =  await agent.run('Hello')
+print(result.data)
